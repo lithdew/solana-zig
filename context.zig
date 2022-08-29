@@ -84,26 +84,60 @@ pub const Context = struct {
 
         var ptr: [*]u8 = self.accounts;
 
-        inline for (@typeInfo(Accounts).Struct.fields) |field| {
-            const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
-            if (account.duplicate_index != std.math.maxInt(u8)) {
-                inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
-                    if (account.duplicate_index == cloned_index) {
-                        @field(accounts, field.name) = @field(accounts, cloned_field.name);
-                    }
-                }
-                ptr += @sizeOf(usize);
-            } else {
-                const start = @ptrToInt(ptr);
-                ptr += @sizeOf(sol.Account.Data);
-                ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
-                ptr += @sizeOf(u64);
-                const end = @ptrToInt(ptr);
+        @setEvalBranchQuota(100_000);
 
-                switch (field.field_type) {
-                    sol.Account => @field(accounts, field.name) = .{ .ptr = @alignCast(@alignOf(sol.Account.Data), account), .len = end - start },
-                    else => @compileError(""),
-                }
+        inline for (@typeInfo(Accounts).Struct.fields) |field| {
+            switch (field.field_type) {
+                sol.Account => {
+                    const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
+                    if (account.duplicate_index != std.math.maxInt(u8)) {
+                        inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
+                            if (cloned_field.field_type == sol.Account) {
+                                if (account.duplicate_index == cloned_index) {
+                                    @field(accounts, field.name) = @field(accounts, cloned_field.name);
+                                }
+                            }
+                        }
+                        ptr += @sizeOf(usize);
+                    } else {
+                        const start = @ptrToInt(ptr);
+                        ptr += @sizeOf(sol.Account.Data);
+                        ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
+                        ptr += @sizeOf(u64);
+                        const end = @ptrToInt(ptr);
+
+                        @field(accounts, field.name) = .{ .ptr = @alignCast(@alignOf(sol.Account.Data), account), .len = end - start };
+                    }
+                },
+                []sol.Account => {
+                    const remaining_accounts = try sol.allocator.alloc(sol.Account, self.num_accounts + 1 - @typeInfo(Accounts).Struct.fields.len);
+                    errdefer sol.allocator.free(remaining_accounts);
+
+                    for (remaining_accounts) |*remaining_account| {
+                        const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
+                        if (account.duplicate_index != std.math.maxInt(u8)) {
+                            inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
+                                if (cloned_field.field_type == sol.Account) {
+                                    if (account.duplicate_index == cloned_index) {
+                                        remaining_account.* = @field(accounts, cloned_field.name);
+                                    }
+                                }
+                            }
+                            ptr += @sizeOf(usize);
+                        } else {
+                            const start = @ptrToInt(ptr);
+                            ptr += @sizeOf(sol.Account.Data);
+                            ptr = @intToPtr([*]u8, std.mem.alignForward(@ptrToInt(ptr + account.data_len + 10 * 1024), @alignOf(usize)));
+                            ptr += @sizeOf(u64);
+                            const end = @ptrToInt(ptr);
+
+                            remaining_account.* = .{ .ptr = @alignCast(@alignOf(sol.Account.Data), account), .len = end - start };
+                        }
+                    }
+
+                    @field(accounts, field.name) = remaining_accounts;
+                },
+                else => @compileError(""),
             }
         }
     }

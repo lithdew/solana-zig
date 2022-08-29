@@ -13,6 +13,7 @@ pub usingnamespace @import("clock.zig");
 pub usingnamespace @import("rent.zig");
 
 pub const SystemProgram = @import("SystemProgram.zig");
+pub const SlotHashes = @import("SlotHashes.zig");
 
 pub const bpf = @import("bpf.zig");
 
@@ -28,6 +29,7 @@ pub const incinerator_id = sol.PublicKey.comptimeFromBase58("1nc1nerator11111111
 pub const rent_id = sol.PublicKey.comptimeFromBase58("SysvarRent111111111111111111111111111111111");
 pub const clock_id = sol.PublicKey.comptimeFromBase58("SysvarC1ock11111111111111111111111111111111");
 pub const sysvar_id = sol.PublicKey.comptimeFromBase58("Sysvar1111111111111111111111111111111111111");
+pub const slot_hashes_id = sol.PublicKey.comptimeFromBase58("SysvarS1otHashes111111111111111111111111111");
 
 pub const ed25519_program_id = sol.PublicKey.comptimeFromBase58("Ed25519SigVerify111111111111111111111111111");
 pub const secp256k1_program_id = sol.PublicKey.comptimeFromBase58("KeccakSecp256k11111111111111111111111111111");

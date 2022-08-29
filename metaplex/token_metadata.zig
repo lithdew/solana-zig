@@ -710,11 +710,11 @@ pub const Entity = union(enum(u8)) {
 
 pub const Data = struct {
     /// The name of the asset.
-    name: []u8,
+    name: []const u8,
     /// The symbol of the asset.
-    symbol: []u8,
+    symbol: []const u8,
     /// URI pointing to JSON representing the asset.
-    uri: []u8,
+    uri: []const u8,
     /// Royalty basis points that goes to creators in secondary sales (0 - 10,000).
     seller_fee_basis_points: u16,
     /// Array of creators, optional.
@@ -723,19 +723,39 @@ pub const Data = struct {
 
 pub const DataV2 = struct {
     /// The name of the asset.
-    name: []u8,
+    name: []const u8,
     /// The symbol of the asset.
-    symbol: []u8,
+    symbol: []const u8,
     /// URI pointing to JSON representing the asset.
-    uri: []u8,
+    uri: []const u8,
     /// Royalty basis points that goes to creators in secondary sales (0 - 10,000).
     seller_fee_basis_points: u16,
     /// Array of creators, optional.
-    creators: ?[]Creator,
+    creators: ?[]const Creator,
     /// The collection that this asset belongs to.
     collection: ?Collection,
     /// Uses for this asset.
     uses: ?Uses,
+
+    pub fn setName(self: *DataV2, new_name: []const u8) void {
+        const ptr = @intToPtr([*]u8, @ptrToInt(self.name.ptr));
+        for (new_name) |c, i| ptr[i] = c;
+    }
+
+    pub fn setSymbol(self: *DataV2, new_symbol: []const u8) void {
+        const ptr = @intToPtr([*]u8, @ptrToInt(self.symbol.ptr));
+        for (new_symbol) |c, i| ptr[i] = c;
+    }
+
+    pub fn setUri(self: *DataV2, new_uri: []const u8) void {
+        const ptr = @intToPtr([*]u8, @ptrToInt(self.uri.ptr));
+        for (new_uri) |c, i| ptr[i] = c;
+    }
+
+    pub fn setCreators(self: *DataV2, new_creators: []const u8) void {
+        const ptr = @intToPtr([*]Creator, @ptrToInt(self.creators.ptr));
+        for (new_creators) |c, i| ptr[i] = c;
+    }
 
     pub fn toV1(self: DataV2) Data {
         return .{
@@ -845,7 +865,7 @@ pub const ReservationListV2 = struct {
     master_edition_id: sol.PublicKey,
     /// What supply counter was on MasterEdition when this reservation was created.
     supply_snapshot: ?u64,
-    reservations: []Reservation,
+    reservations: []const Reservation,
     /// How many reservations there are going to be, given on first set_reservation call.
     total_reservation_spots: u64,
     /// Cached count of reservation spots in the reservation vector to save on CPU.
@@ -862,7 +882,7 @@ pub const ReservationListV1 = struct {
     /// Present for reverse lookups.
     master_edition_id: sol.PublicKey,
     supply_snapshot: ?u64,
-    reservations: []ReservationV1,
+    reservations: []const ReservationV1,
 };
 
 pub const ReservationV1 = struct {

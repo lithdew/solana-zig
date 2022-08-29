@@ -50,8 +50,12 @@ pub const Instruction = union(enum(u8)) {
 };
 
 pub fn getAccountId(mint_id: sol.PublicKey, user_id: sol.PublicKey) !sol.PublicKey {
-    const pda = try sol.PublicKey.findProgramAddress(.{ user_id, spl.token_program_id, mint_id }, spl.associated_token_program_id);
+    const pda = try associated_token.getAccountPDA(mint_id, user_id);
     return pda.address;
+}
+
+pub fn getAccountPDA(mint_id: sol.PublicKey, user_id: sol.PublicKey) !sol.ProgramDerivedAddress {
+    return sol.PublicKey.findProgramAddress(.{ user_id, spl.token_program_id, mint_id }, spl.associated_token_program_id);
 }
 
 pub fn createAccount(account: sol.Account.Info, params: struct {
