@@ -29,7 +29,7 @@ pub const Alphabet = struct {
 
     pub fn comptimeEncode(comptime self: base58.Alphabet, comptime decoded: []const u8) [self.comptimeGetEncodedLength(decoded)]u8 {
         comptime {
-            @setEvalBranchQuota(10_000);
+            @setEvalBranchQuota(100_000);
             var buffer: [self.getEncodedLengthUpperBound(decoded.len)]u8 = undefined;
             const encoded = self.encode(&buffer, decoded);
             return encoded[0..encoded.len].*;
@@ -38,7 +38,7 @@ pub const Alphabet = struct {
 
     pub fn comptimeDecode(comptime self: base58.Alphabet, comptime encoded: []const u8) [self.comptimeGetDecodedLength(encoded)]u8 {
         comptime {
-            @setEvalBranchQuota(10_000);
+            @setEvalBranchQuota(100_000);
             var buffer: [self.getDecodedLengthUpperBound(encoded.len)]u8 = undefined;
             const decoded = self.decode(&buffer, encoded) catch |err| {
                 @compileError("failed to decode base58 string: '" ++ @errorName(err) ++ "'");
@@ -49,7 +49,7 @@ pub const Alphabet = struct {
 
     pub fn comptimeGetDecodedLength(comptime self: base58.Alphabet, comptime encoded: []const u8) usize {
         comptime {
-            @setEvalBranchQuota(10_000);
+            @setEvalBranchQuota(100_000);
 
             var decoded = std.mem.zeroes([self.getDecodedLengthUpperBound(encoded.len)]u8);
 
@@ -83,7 +83,7 @@ pub const Alphabet = struct {
 
     pub fn comptimeGetEncodedLength(comptime self: base58.Alphabet, comptime decoded: []const u8) usize {
         comptime {
-            @setEvalBranchQuota(10_000);
+            @setEvalBranchQuota(100_000);
 
             var encoded = std.mem.zeroes([self.getEncodedLengthUpperBound(decoded.len)]u8);
 
