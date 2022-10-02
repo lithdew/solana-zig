@@ -316,6 +316,61 @@ pub fn setAndVerifyCollection(params: struct {
     }
 }
 
+pub fn burnNft(params: struct {
+    metadata: sol.Account.Info,
+    owner: sol.Account.Info,
+    mint: sol.Account.Info,
+    token_account: sol.Account.Info,
+    master_edition_account: sol.Account.Info,
+    token_program: sol.Account.Info,
+    collection_metadata: ?sol.Account.Info,
+    seeds: []const []const []const u8 = &.{},
+}) !void {
+    const data = try borsh.writeAlloc(sol.allocator, token_metadata.Instruction.burn_nft);
+    defer sol.allocator.free(data);
+
+    var accounts: [7]sol.Account.Param = undefined;
+    accounts[0] = .{ .id = params.metadata.id, .is_writable = true, .is_signer = false };
+    accounts[1] = .{ .id = params.owner.id, .is_writable = true, .is_signer = true };
+    accounts[2] = .{ .id = params.mint.id, .is_writable = true, .is_signer = false };
+    accounts[3] = .{ .id = params.token_account.id, .is_writable = true, .is_signer = false };
+    accounts[4] = .{ .id = params.master_edition_account.id, .is_writable = true, .is_signer = false };
+    accounts[5] = .{ .id = params.token_program.id, .is_writable = false, .is_signer = false };
+
+    var num_accounts: usize = 6;
+    if (params.collection_metadata) |collection_metadata| {
+        accounts[6] = .{ .id = collection_metadata.id, .is_writable = true, .is_signer = false };
+        num_accounts += 1;
+    }
+
+    const instruction = sol.Instruction.from(.{
+        .program_id = &metaplex.token_metadata_program_id,
+        .accounts = accounts[0..num_accounts],
+        .data = data,
+    });
+
+    if (params.collection_metadata) |collection_metadata| {
+        try instruction.invokeSigned(&.{
+            params.metadata,
+            params.owner,
+            params.mint,
+            params.token_account,
+            params.master_edition_account,
+            params.token_program,
+            collection_metadata,
+        }, params.seeds);
+    } else {
+        try instruction.invokeSigned(&.{
+            params.metadata,
+            params.owner,
+            params.mint,
+            params.token_account,
+            params.master_edition_account,
+            params.token_program,
+        }, params.seeds);
+    }
+}
+
 pub const Instruction = union(enum) {
     /// Create Metadata object.
     ///
@@ -693,6 +748,17 @@ pub const Instruction = union(enum) {
     /// #[account(0, writable, name="metadata", desc="Metadata (pda of ['metadata', program id, mint id])")]
     /// #[account(1, signer, name="creator", desc="Creator")]
     remove_creator_verification: void,
+
+    /// Completely burn a NFT, including closing the metadata account.
+    ///
+    /// #[account(0, writable, name="metadata", desc="Metadata (pda of ['metadata', program id, mint id])")]
+    /// #[account(1, signer, writable, name="owner", desc="NFT owner")]
+    /// #[account(2, writable, name="mint", desc="Mint of the NFT")]
+    /// #[account(3, writable, name="token_account", desc="Token account to close")]
+    /// #[account(4, writable, name="master_edition_account", desc="MasterEdition2 of the NFT")]
+    /// #[account(5, name="spl token program", desc="SPL Token Program")]
+    /// #[account(6, optional, writable, name="collection_metadata", desc="Metadata of the Collection")]
+    burn_nft,
 };
 
 pub const Entity = union(enum(u8)) {
