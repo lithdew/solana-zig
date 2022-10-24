@@ -805,20 +805,41 @@ pub const DataV2 = struct {
 
     pub fn setName(self: *DataV2, new_name: []const u8) void {
         const ptr = @intToPtr([*]u8, @ptrToInt(self.name.ptr));
-        for (new_name) |c, i| ptr[i] = c;
+        for (new_name) |c, i| {
+            ptr[i] = c;
+        }
+        if (new_name.len < self.name.len) {
+            for (self.name[new_name.len..]) |_, i| {
+                ptr[new_name.len + i] = 0;
+            }
+        }
     }
 
     pub fn setSymbol(self: *DataV2, new_symbol: []const u8) void {
         const ptr = @intToPtr([*]u8, @ptrToInt(self.symbol.ptr));
-        for (new_symbol) |c, i| ptr[i] = c;
+        for (new_symbol) |c, i| {
+            ptr[i] = c;
+        }
+        if (new_symbol.len < self.symbol.len) {
+            for (self.symbol[new_symbol.len..]) |_, i| {
+                ptr[new_symbol.len + i] = 0;
+            }
+        }
     }
 
     pub fn setUri(self: *DataV2, new_uri: []const u8) void {
         const ptr = @intToPtr([*]u8, @ptrToInt(self.uri.ptr));
-        for (new_uri) |c, i| ptr[i] = c;
+        for (new_uri) |c, i| {
+            ptr[i] = c;
+        }
+        if (new_uri.len < self.uri.len) {
+            for (self.uri[new_uri.len..]) |_, i| {
+                ptr[new_uri.len + i] = 0;
+            }
+        }
     }
 
-    pub fn setCreators(self: *DataV2, new_creators: []const u8) void {
+    pub fn setCreators(self: *DataV2, new_creators: []const Creator) void {
         const ptr = @intToPtr([*]Creator, @ptrToInt(self.creators.ptr));
         for (new_creators) |c, i| ptr[i] = c;
     }
