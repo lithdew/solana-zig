@@ -216,6 +216,11 @@ pub const PublicKey = extern struct {
         return pda;
     }
 
+    pub fn jsonStringify(self: PublicKey, options: anytype, writer: anytype) !void {
+        _ = options;
+        try writer.print("\"{}\"", .{self});
+    }
+
     pub fn format(self: PublicKey, comptime fmt: []const u8, options: std.fmt.FormatOptions, writer: anytype) !void {
         _ = fmt;
         _ = options;

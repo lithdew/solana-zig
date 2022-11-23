@@ -27,7 +27,7 @@ pub const Context = struct {
             ptr += @sizeOf(u64);
         }
 
-        const data_len = std.mem.bytesToValue(u64, ptr[0..@sizeOf(u64)]);
+        const data_len = try std.math.cast(usize, std.mem.bytesToValue(u64, ptr[0..@sizeOf(u64)]));
         ptr += @sizeOf(u64);
 
         const data = ptr[0..data_len];
