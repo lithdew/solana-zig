@@ -49,17 +49,17 @@ pub const use_authority_record_len = 18;
 pub const collection_authority_record_len = 11;
 
 pub fn getMetadataId(mint_id: sol.PublicKey) !sol.PublicKey {
-    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", metaplex.token_metadata_program_id, mint_id }, metaplex.token_metadata_program_id);
+    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", &metaplex.token_metadata_program_id.bytes, mint_id }, metaplex.token_metadata_program_id);
     return pda.address;
 }
 
 pub fn getMasterEditionId(mint_id: sol.PublicKey) !sol.PublicKey {
-    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", metaplex.token_metadata_program_id, mint_id, "edition" }, metaplex.token_metadata_program_id);
+    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", &metaplex.token_metadata_program_id.bytes, mint_id, "edition" }, metaplex.token_metadata_program_id);
     return pda.address;
 }
 
 pub fn getEditionId(mint_id: sol.PublicKey, edition_number: u8) !sol.PublicKey {
-    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", metaplex.token_metadata_program_id, mint_id, "edition", edition_number / edition_marker_bit_len }, metaplex.token_metadata_program_id);
+    const pda = try sol.PublicKey.findProgramAddress(.{ "metadata", &metaplex.token_metadata_program_id.bytes, mint_id, "edition", edition_number / edition_marker_bit_len }, metaplex.token_metadata_program_id);
     return pda.address;
 }
 

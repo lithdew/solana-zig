@@ -138,7 +138,7 @@ pub const PublicKey = extern struct {
     pub fn findProgramAddress(seeds: anytype, program_id: PublicKey) !ProgramDerivedAddress {
         var pda: ProgramDerivedAddress = undefined;
 
-        if (sol.is_bpf_program) {
+        if (comptime sol.is_bpf_program) {
             const Syscall = struct {
                 extern fn sol_try_find_program_address(
                     seeds_ptr: [*]const []const u8,
@@ -156,7 +156,7 @@ pub const PublicKey = extern struct {
                 const Seed = @TypeOf(seeds[seeds_index]);
                 if (comptime std.meta.trait.isZigString(Seed)) {
                     seeds_array[seeds_index] = seeds[seeds_index];
-                } else if (Seed == PublicKey) {
+                } else if (comptime Seed == PublicKey) {
                     seeds_array[seeds_index] = &seeds[seeds_index].bytes;
                 } else {
                     @compileError("Unknown seed type '" ++ @typeName(Seed) ++ "'");
@@ -200,7 +200,7 @@ pub const PublicKey = extern struct {
         seeds_with_bump[seeds.len] = &pda.bump_seed;
 
         while (pda.bump_seed[0] >= 0) : (pda.bump_seed[0] -= 1) {
-            pda = .{
+            pda = ProgramDerivedAddress{
                 .address = PublicKey.createProgramAddress(&seeds_with_bump, program_id) catch {
                     if (pda.bump_seed[0] == 0) {
                         return error.NoViableBumpSeed;

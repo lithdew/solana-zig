@@ -27,7 +27,7 @@ pub const Context = struct {
             ptr += @sizeOf(u64);
         }
 
-        const data_len = try std.math.cast(usize, std.mem.bytesToValue(u64, ptr[0..@sizeOf(u64)]));
+        const data_len = std.math.cast(usize, std.mem.bytesToValue(u64, ptr[0..@sizeOf(u64)])) orelse return error.DataTooLarge;
         ptr += @sizeOf(u64);
 
         const data = ptr[0..data_len];
@@ -65,7 +65,7 @@ pub const Context = struct {
 
         comptime {
             inline for (@typeInfo(Accounts).Struct.fields) |field, i| {
-                switch (field.field_type) {
+                switch (field.type) {
                     sol.Account => min_accounts += 1,
                     []sol.Account => {
                         if (i != @typeInfo(Accounts).Struct.fields.len - 1) {
@@ -87,12 +87,12 @@ pub const Context = struct {
         @setEvalBranchQuota(100_000);
 
         inline for (@typeInfo(Accounts).Struct.fields) |field| {
-            switch (field.field_type) {
+            switch (field.type) {
                 sol.Account => {
                     const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
                     if (account.duplicate_index != std.math.maxInt(u8)) {
                         inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
-                            if (cloned_field.field_type == sol.Account) {
+                            if (cloned_field.type == sol.Account) {
                                 if (account.duplicate_index == cloned_index) {
                                     @field(accounts, field.name) = @field(accounts, cloned_field.name);
                                 }
@@ -117,7 +117,7 @@ pub const Context = struct {
                         const account: *align(1) sol.Account.Data = @ptrCast(*align(1) sol.Account.Data, ptr);
                         if (account.duplicate_index != std.math.maxInt(u8)) {
                             inline for (@typeInfo(Accounts).Struct.fields) |cloned_field, cloned_index| {
-                                if (cloned_field.field_type == sol.Account) {
+                                if (cloned_field.type == sol.Account) {
                                     if (account.duplicate_index == cloned_index) {
                                         remaining_account.* = @field(accounts, cloned_field.name);
                                     }

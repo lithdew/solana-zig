@@ -3,12 +3,14 @@ const std = @import("std");
 const heap_start = @intToPtr([*]u8, 0x300000000);
 const heap_length = 32 * 1024;
 
-pub const allocator = std.mem.Allocator.init(
-    @ptrCast(*Allocator, heap_start),
-    Allocator.allocFn,
-    Allocator.resizeFn,
-    Allocator.freeFn,
-);
+pub const allocator: std.mem.Allocator = .{
+    .ptr = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), heap_start)),
+    .vtable = &.{
+        .alloc = Allocator.allocFn,
+        .resize = Allocator.resizeFn,
+        .free = Allocator.freeFn,
+    },
+};
 
 const Allocator = struct {
     end_index: usize,
@@ -18,66 +20,79 @@ const Allocator = struct {
     }
 
     fn allocFn(
-        self: *Allocator,
+        ctx: *anyopaque,
         n: usize,
-        ptr_align: u29,
-        _: u29,
-        _: usize,
-    ) std.mem.Allocator.Error![]u8 {
+        log2_ptr_align: u8,
+        return_address: usize,
+    ) ?[*]u8 {
+        _ = return_address;
+
+        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
         if (self.end_index == 0) {
             self.end_index = comptime std.mem.alignPointerOffset(heap_start, @alignOf(Allocator)).? + @sizeOf(Allocator);
         }
 
+        const ptr_align = @as(usize, 1) << @intCast(std.mem.Allocator.Log2Align, log2_ptr_align);
         const offset = std.mem.alignPointerOffset(heap_start + self.end_index, ptr_align) orelse {
-            return error.OutOfMemory;
+            return null;
         };
 
         const adjusted_index = self.end_index + offset;
         const new_end_index = adjusted_index + n;
 
         if (new_end_index > heap_length) {
-            return error.OutOfMemory;
+            return null;
         }
-        const result = heap_start[adjusted_index..new_end_index];
         self.end_index = new_end_index;
 
-        return result;
+        return heap_start + adjusted_index;
     }
 
     fn resizeFn(
-        self: *Allocator,
+        ctx: *anyopaque,
         buf: []u8,
-        _: u29,
+        log2_buf_align: u8,
         new_size: usize,
-        len_align: u29,
-        _: usize,
-    ) ?usize {
+        return_address: usize,
+    ) bool {
+        _ = log2_buf_align;
+        _ = return_address;
+
+        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
         if (self.end_index == 0) {
             self.end_index = comptime std.mem.alignPointerOffset(heap_start, @alignOf(Allocator)).? + @sizeOf(Allocator);
         }
 
         if (!self.isLastAllocation(buf)) {
             if (new_size > buf.len) {
-                return null;
+                return false;
             }
-            return if (new_size == 0) 0 else std.mem.alignAllocLen(buf.len, new_size, len_align);
+            return true;
         }
 
         if (new_size <= buf.len) {
             const sub = buf.len - new_size;
             self.end_index -= sub;
-            return if (new_size == 0) 0 else std.mem.alignAllocLen(buf.len - sub, new_size, len_align);
+            return true;
         }
 
         const add = new_size - buf.len;
         if (add + self.end_index > heap_length) {
-            return null;
+            return false;
         }
         self.end_index += add;
-        return new_size;
+        return true;
     }
 
-    fn freeFn(self: *Allocator, buf: []u8, _: u29, _: usize) void {
+    fn freeFn(
+        ctx: *anyopaque,
+        buf: []u8,
+        log2_buf_align: u8,
+        return_address: usize,
+    ) void {
+        _ = log2_buf_align;
+        _ = return_address;
+        const self = @ptrCast(*Allocator, @alignCast(@alignOf(Allocator), ctx));
         if (self.isLastAllocation(buf)) {
             self.end_index -= buf.len;
         }

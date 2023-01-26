@@ -18,9 +18,10 @@ pub const SlotHashes = @import("SlotHashes.zig");
 pub const bpf = @import("bpf.zig");
 
 pub const is_bpf_program = !builtin.is_test and
-    builtin.os.tag == .freestanding and
+    ((builtin.os.tag == .freestanding and
     builtin.cpu.arch == .bpfel and
-    std.Target.bpf.featureSetHas(builtin.cpu.features, .solana);
+    std.Target.bpf.featureSetHas(builtin.cpu.features, .solana)) or
+    (builtin.cpu.arch == .sbf));
 
 pub const native_loader_id = sol.PublicKey.comptimeFromBase58("NativeLoader1111111111111111111111111111111");
 pub const system_program_id = sol.PublicKey.comptimeFromBase58("11111111111111111111111111111111");
@@ -30,6 +31,7 @@ pub const rent_id = sol.PublicKey.comptimeFromBase58("SysvarRent1111111111111111
 pub const clock_id = sol.PublicKey.comptimeFromBase58("SysvarC1ock11111111111111111111111111111111");
 pub const sysvar_id = sol.PublicKey.comptimeFromBase58("Sysvar1111111111111111111111111111111111111");
 pub const slot_hashes_id = sol.PublicKey.comptimeFromBase58("SysvarS1otHashes111111111111111111111111111");
+pub const instructions_id = sol.PublicKey.comptimeFromBase58("Sysvar1nstructions1111111111111111111111111");
 
 pub const ed25519_program_id = sol.PublicKey.comptimeFromBase58("Ed25519SigVerify111111111111111111111111111");
 pub const secp256k1_program_id = sol.PublicKey.comptimeFromBase58("KeccakSecp256k11111111111111111111111111111");

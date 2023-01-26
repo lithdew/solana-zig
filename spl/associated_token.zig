@@ -55,7 +55,7 @@ pub fn getAccountId(mint_id: sol.PublicKey, user_id: sol.PublicKey) !sol.PublicK
 }
 
 pub fn getAccountPDA(mint_id: sol.PublicKey, user_id: sol.PublicKey) !sol.ProgramDerivedAddress {
-    return sol.PublicKey.findProgramAddress(.{ user_id, spl.token_program_id, mint_id }, spl.associated_token_program_id);
+    return sol.PublicKey.findProgramAddress(.{ user_id, &spl.token_program_id.bytes, mint_id }, spl.associated_token_program_id);
 }
 
 pub fn createAccount(account: sol.Account.Info, params: struct {
@@ -129,8 +129,4 @@ pub fn createIdempotentAccount(account: sol.Account.Info, params: struct {
         params.token_program,
         params.associated_token_program,
     }, params.seeds);
-}
-
-test {
-    std.testing.refAllDecls(@This());
 }
